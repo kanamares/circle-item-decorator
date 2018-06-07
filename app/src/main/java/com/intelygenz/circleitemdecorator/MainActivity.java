@@ -73,8 +73,8 @@ public class MainActivity extends AppCompatActivity {
 		@Override
 		public MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
 			return new MyViewHolder(LayoutInflater
-				                        .from(context)
-				                        .inflate(R.layout.item, parent, false));
+										.from(context)
+										.inflate(R.layout.item, parent, false));
 		}
 		
 		@Override
@@ -105,6 +105,12 @@ public class MainActivity extends AppCompatActivity {
 	
 	class CircleItemDecoration extends RecyclerView.ItemDecoration {
 		
+		float outRadius = -1f;
+		float inRadius = -1f;
+		float bottomRadius = -1f;
+		float centerX = -1f;
+		float centerY = -1f;
+		
 		Path myPath;
 		RectF outterCircle;
 		RectF innerCircle;
@@ -126,28 +132,46 @@ public class MainActivity extends AppCompatActivity {
 		@Override
 		public void onDraw(Canvas c, RecyclerView parent, RecyclerView.State state) {
 			super.onDraw(c, parent, state);
-			int centerX = getCenterX(parent);
-			int centerY = getCenterY(parent);
-			int radius = parent.getWidth() / 2;
+			centerX = getCenterX(parent);
+			centerY = getCenterY(parent);
+			outRadius = parent.getWidth() / 2;
+			inRadius = outRadius - (parent
+										.getChildAt(0)
+										.getHeight() / 2);
+			bottomRadius = outRadius - parent
+				.getChildAt(0)
+				.getHeight();
 			final int childCount = parent.getChildCount();
 			for (int i = 0; i < childCount; i++) {
 				final View child = parent.getChildAt(i);
-				int childTop = child.getTop();
-				int childLeft = child.getLeft() + child.getWidth() / 2;
-				Log.d(TAG, "child: " + i + " | top: " + childTop + " | left: " + childLeft);
-				child.setY((Math.abs(centerX - childLeft)) / 2);
+				double childTop = child.getTop();
+				double childCenter = child.getLeft() + child.getWidth() / 2;
+				double x = childCenter - outRadius;
+				float y = 0;
+				if (x > inRadius) {
+					y = outRadius - child.getWidth() / 2;
+				} else if (x < -inRadius) {
+					y = outRadius - child.getWidth() / 2;
+				} else {
+					y = (float) (inRadius - Math.sqrt(Math.pow(inRadius, 2) - Math.pow(x, 2)));
+				}
+				if (i == 0) {
+					Log.d(TAG, "child: " + i + " | top: " + childTop + " | left: " + childCenter + " | x: " + x + " | y: " + y);
+				}
+				child.setY(y);
 			}
-			drawBackground(c, 0, 60, radius);
+			drawBackground(c, 0, 60, outRadius);
 		}
 		
 		@Override
 		public void onDrawOver(Canvas canvas, RecyclerView parent, RecyclerView.State state) {
-			float radius = parent.getWidth() / 2;
 			Paint mPaint = new Paint();
 			mPaint.setStyle(Paint.Style.STROKE);
 			mPaint.setStrokeWidth(1);
 			mPaint.setColor(Color.WHITE);
-			canvas.drawCircle(getCenterX(parent), getCenterY(parent), radius, mPaint);
+			canvas.drawCircle(centerX, centerY, outRadius, mPaint);
+			canvas.drawCircle(centerX, centerY, inRadius, mPaint);
+			canvas.drawCircle(centerX, centerY, bottomRadius, mPaint);
 		}
 		
 		@Override
