@@ -2,7 +2,13 @@ package com.intelygenz.circleitemdecorator;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.RadialGradient;
 import android.graphics.Rect;
+import android.graphics.RectF;
+import android.graphics.Shader;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
@@ -29,7 +35,7 @@ public class MainActivity extends AppCompatActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		List<Integer> list = new ArrayList<>();
-		for (int i = 0; i < 11; i++) {
+		for (int i = 0; i < 3; i++) {
 			list.add(i);
 		}
 		recyclerView = findViewById(R.id.recycler_view);
@@ -38,7 +44,9 @@ public class MainActivity extends AppCompatActivity {
 		recyclerView.addItemDecoration(new CircleItemDecoration());
 		SnapHelper helper = new LinearSnapHelper();
 		helper.attachToRecyclerView(recyclerView);
-		recyclerView.getLayoutManager().scrollToPosition(Integer.MAX_VALUE / 2);
+		recyclerView
+			.getLayoutManager()
+			.scrollToPosition(Integer.MAX_VALUE / 2);
 	}
 	
 	private int getCenterY(RecyclerView parent) {
@@ -65,13 +73,13 @@ public class MainActivity extends AppCompatActivity {
 		@Override
 		public MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
 			return new MyViewHolder(LayoutInflater
-										.from(context)
-										.inflate(R.layout.item, parent, false));
+				                        .from(context)
+				                        .inflate(R.layout.item, parent, false));
 		}
 		
 		@Override
 		public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
-			holder.textView.setText("P:"+position+"|L:"+getItem(position));
+			holder.textView.setText("P:" + position + "\nL:" + getItem(position));
 		}
 		
 		@Override
@@ -97,30 +105,72 @@ public class MainActivity extends AppCompatActivity {
 	
 	class CircleItemDecoration extends RecyclerView.ItemDecoration {
 		
+		Path myPath;
+		RectF outterCircle;
+		RectF innerCircle;
+		Paint paint;
+		
+		CircleItemDecoration() {
+			myPath = new Path();
+			outterCircle = new RectF();
+			innerCircle = new RectF();
+			paint = new Paint();
+			paint.setDither(true);
+			paint.setStyle(Paint.Style.FILL);
+			paint.setStrokeJoin(Paint.Join.ROUND);
+			paint.setStrokeCap(Paint.Cap.ROUND);
+			paint.setAntiAlias(true);
+			
+		}
+		
 		@Override
 		public void onDraw(Canvas c, RecyclerView parent, RecyclerView.State state) {
 			super.onDraw(c, parent, state);
 			int centerX = getCenterX(parent);
 			int centerY = getCenterY(parent);
+			int radius = parent.getWidth() / 2;
 			final int childCount = parent.getChildCount();
 			for (int i = 0; i < childCount; i++) {
 				final View child = parent.getChildAt(i);
 				int childTop = child.getTop();
-				int childLeft = child.getLeft();
+				int childLeft = child.getLeft() + child.getWidth() / 2;
 				Log.d(TAG, "child: " + i + " | top: " + childTop + " | left: " + childLeft);
 				child.setY((Math.abs(centerX - childLeft)) / 2);
 			}
-			Log.d(TAG, "");
-			Log.d(TAG, "");
+			drawBackground(c, 0, 60, radius);
 		}
 		
 		@Override
-		public void onDrawOver(Canvas c, RecyclerView parent, RecyclerView.State state) {
-			super.onDrawOver(c, parent, state);
+		public void onDrawOver(Canvas canvas, RecyclerView parent, RecyclerView.State state) {
+			float radius = parent.getWidth() / 2;
+			Paint mPaint = new Paint();
+			mPaint.setStyle(Paint.Style.STROKE);
+			mPaint.setStrokeWidth(1);
+			mPaint.setColor(Color.WHITE);
+			canvas.drawCircle(getCenterX(parent), getCenterY(parent), radius, mPaint);
 		}
 		
 		@Override
 		public void getItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {
+		}
+		
+		private void drawBackground(Canvas canvas, float start, float sweep, float radius) {
+			setGradient(0xffffffff, 0xffffffff, radius);
+			paint.setStrokeWidth(radius / 14.0f);
+			float adjust = .038f * radius;
+			outterCircle.set(adjust, adjust, radius * 2 - adjust, radius * 2 - adjust);
+			adjust = .276f * radius;
+			innerCircle.set(adjust, adjust, radius * 2 - adjust, radius * 2 - adjust);
+			myPath.reset();
+			myPath.arcTo(outterCircle, start, sweep, false);
+			myPath.arcTo(innerCircle, start + sweep, -sweep, false);
+			myPath.close();
+			canvas.drawPath(myPath, paint);
+		}
+		
+		private void setGradient(int sColor, int eColor, float radius) {
+			paint.setShader(
+				new RadialGradient(radius, radius, radius - 5, new int[] { sColor, eColor }, new float[] { .6f, .95f }, Shader.TileMode.CLAMP));
 		}
 		
 	}
