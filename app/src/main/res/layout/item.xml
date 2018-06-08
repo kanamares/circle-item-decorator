@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.constraint.ConstraintLayout
 	xmlns:android="http://schemas.android.com/apk/res/android"
-	android:layout_width="100dp"
-	android:layout_height="100dp"
+	android:layout_width="60dp"
+	android:layout_height="60dp"
 	xmlns:app="http://schemas.android.com/apk/res-auto">
 	
 	<ImageView
 		android:id="@+id/image"
 		android:layout_width="0dp"
 		android:layout_height="0dp"
-		android:background="@color/colorAccent"
+		android:background="#33cccc00"
 		app:layout_constraintBottom_toBottomOf="parent"
 		app:layout_constraintEnd_toEndOf="parent"
 		app:layout_constraintStart_toStartOf="parent"

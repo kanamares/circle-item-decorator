@@ -73,8 +73,8 @@ public class MainActivity extends AppCompatActivity {
 		@Override
 		public MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
 			return new MyViewHolder(LayoutInflater
-										.from(context)
-										.inflate(R.layout.item, parent, false));
+				                        .from(context)
+				                        .inflate(R.layout.item, parent, false));
 		}
 		
 		@Override
@@ -107,6 +107,7 @@ public class MainActivity extends AppCompatActivity {
 		
 		float outRadius = -1f;
 		float inRadius = -1f;
+		float middleRadius = -1f;
 		float bottomRadius = -1f;
 		float centerX = -1f;
 		float centerY = -1f;
@@ -135,9 +136,10 @@ public class MainActivity extends AppCompatActivity {
 			centerX = getCenterX(parent);
 			centerY = getCenterY(parent);
 			outRadius = parent.getWidth() / 2;
-			inRadius = outRadius - (parent
-										.getChildAt(0)
-										.getHeight() / 2);
+			inRadius = parent.getWidth() / 3;
+			middleRadius = outRadius - (parent
+				                            .getChildAt(0)
+				                            .getHeight() / 2);
 			bottomRadius = outRadius - parent
 				.getChildAt(0)
 				.getHeight();
@@ -160,29 +162,48 @@ public class MainActivity extends AppCompatActivity {
 				}
 				child.setY(y);
 			}
-			drawBackground(c, 0, 60, outRadius);
+			drawGuides(c);
+			//drawBackground(c, 180, 180, outRadius);
 		}
 		
 		@Override
 		public void onDrawOver(Canvas canvas, RecyclerView parent, RecyclerView.State state) {
-			Paint mPaint = new Paint();
-			mPaint.setStyle(Paint.Style.STROKE);
-			mPaint.setStrokeWidth(1);
-			mPaint.setColor(Color.WHITE);
-			canvas.drawCircle(centerX, centerY, outRadius, mPaint);
-			canvas.drawCircle(centerX, centerY, inRadius, mPaint);
-			canvas.drawCircle(centerX, centerY, bottomRadius, mPaint);
 		}
 		
 		@Override
 		public void getItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {
 		}
 		
+		private void drawGuides(Canvas canvas) {
+			Paint paint = new Paint();
+			paint.setAntiAlias(true);
+			paint.setDither(true);
+			paint.setStyle(Paint.Style.STROKE);
+			paint.setStrokeWidth(1);
+			paint.setColor(Color.BLUE);
+			Path path = new Path();
+			
+			//out
+			RectF outCircle = new RectF(0, 0, outRadius * 2, outRadius * 2);
+			path.arcTo(outCircle, 180, 180, false);
+			
+			//in
+			float innerAdjust = outRadius - inRadius;
+			RectF inCircle = new RectF(innerAdjust, innerAdjust, outRadius * 2 - innerAdjust, outRadius * 2 - innerAdjust);
+			path.arcTo(inCircle, 180, 180, false);
+			
+			//middle
+			float middleAdjust = outRadius - middleRadius;
+			RectF middleCircle = new RectF(middleAdjust, middleAdjust, outRadius * 2 - middleAdjust, outRadius * 2 - middleAdjust);
+			path.arcTo(middleCircle, 180, 180, false);
+			
+			canvas.drawPath(path, paint);
+		}
+		
 		private void drawBackground(Canvas canvas, float start, float sweep, float radius) {
 			setGradient(0xffffffff, 0xffffffff, radius);
-			paint.setStrokeWidth(radius / 14.0f);
-			float adjust = .038f * radius;
-			outterCircle.set(adjust, adjust, radius * 2 - adjust, radius * 2 - adjust);
+			float adjust = 0;
+			outterCircle.set(0, 0, radius * 2, radius * 2);
 			adjust = .276f * radius;
 			innerCircle.set(adjust, adjust, radius * 2 - adjust, radius * 2 - adjust);
 			myPath.reset();
