@@ -5,6 +5,7 @@
 	xmlns:tools="http://schemas.android.com/tools"
 	android:layout_width="match_parent"
 	android:layout_height="match_parent"
+	android:background="#cccccc"
 	tools:context=".MainActivity">
 	
 	<android.support.constraint.Guideline
@@ -19,9 +20,8 @@
 		android:layout_width="match_parent"
 		android:layout_height="0dp"
 		android:layout_centerInParent="true"
-		android:background="#cccccc"
+		android:overScrollMode="never"
 		app:layout_constraintDimensionRatio="1"
-		
 		/>
 
 </android.support.constraint.ConstraintLayout>

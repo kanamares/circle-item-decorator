@@ -14,7 +14,6 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.LinearSnapHelper;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SnapHelper;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -103,6 +102,8 @@ public class MainActivity extends AppCompatActivity {
 	
 	class CircleItemDecoration extends RecyclerView.ItemDecoration {
 		
+		private boolean initialized = false;
+		
 		int startAngleSlice = 180 - 15;
 		
 		float outRadius = -1f;
@@ -111,21 +112,72 @@ public class MainActivity extends AppCompatActivity {
 		float centerX = -1f;
 		float centerY = -1f;
 		
+		private Paint paintSpokes;
+		private Paint paintSelected;
+		private Paint paintBackground;
+		private Paint paintGuides;
+		
 		CircleItemDecoration() {
+			initPaintSpokes();
+			initPaintSelected();
+			initPaintBackground();
+			initPaintGuides();
+		}
+		
+		private void initPaintGuides() {
+			paintGuides = new Paint();
+			paintGuides.setAntiAlias(true);
+			paintGuides.setDither(true);
+			paintGuides.setStyle(Paint.Style.STROKE);
+			paintGuides.setStrokeWidth(1);
+			paintGuides.setColor(Color.BLUE);
+		}
+		
+		private void initPaintBackground() {
+			paintBackground = new Paint();
+			paintBackground.setDither(true);
+			paintBackground.setStyle(Paint.Style.FILL);
+			paintBackground.setStrokeJoin(Paint.Join.ROUND);
+			paintBackground.setStrokeCap(Paint.Cap.ROUND);
+			paintBackground.setColor(Color.WHITE);
+			paintBackground.setAntiAlias(true);
+		}
+		
+		private void initPaintSelected() {
+			paintSelected = new Paint();
+			paintSelected.setDither(true);
+			paintSelected.setStyle(Paint.Style.FILL);
+			paintSelected.setStrokeJoin(Paint.Join.ROUND);
+			paintSelected.setStrokeCap(Paint.Cap.ROUND);
+			paintSelected.setColor(Color.RED);
+			paintSelected.setAntiAlias(true);
+		}
+		
+		private void initPaintSpokes() {
+			paintSpokes = new Paint();
+			paintSpokes.setAntiAlias(true);
+			paintSpokes.setDither(true);
+			paintSpokes.setStyle(Paint.Style.STROKE);
+			paintSpokes.setStrokeWidth(1);
 		}
 		
 		@Override
 		public void onDraw(Canvas c, RecyclerView parent, RecyclerView.State state) {
 			super.onDraw(c, parent, state);
-			centerX = getCenterX(parent);
-			centerY = getCenterY(parent);
-			outRadius = parent.getWidth() / 2;
-			inRadius = parent.getWidth() / 3;
-			middleRadius = outRadius - (outRadius - inRadius) / 2;
+			
+			if(!initialized) {
+				centerX = getCenterX(parent);
+				centerY = getCenterY(parent);
+				outRadius = parent.getWidth() / 2;
+				inRadius = parent.getWidth() / 3;
+				middleRadius = outRadius - (outRadius - inRadius) / 2;
+				initialized = true;
+			}
+			
 			final int childCount = parent.getChildCount();
-			Log.d(TAG, "childCount: " + childCount + " centerX: " + centerX + " centerY: " + centerY);
+			//Log.d(TAG, "childCount: " + childCount + " centerX: " + centerX + " centerY: " + centerY);
 			for (int i = 0; i < childCount; i++) {
-				if(i > 7) continue;
+				//if(i > 7) continue;
 				final View child = parent.getChildAt(i);
 				float childCenter = child.getLeft() + child.getWidth() / 2;
 				float totalX;
@@ -151,7 +203,7 @@ public class MainActivity extends AppCompatActivity {
 			drawBackground(c);
 			drawSelected(c);
 			drawGuides(c);
-			drawSpokes(c, parent.getChildAt(3));
+			drawSpokes(c);
 		}
 		
 		@Override
@@ -163,37 +215,30 @@ public class MainActivity extends AppCompatActivity {
 		}
 		
 		private void drawGuides(Canvas canvas) {
-			Paint paint = new Paint();
-			paint.setAntiAlias(true);
-			paint.setDither(true);
-			paint.setStyle(Paint.Style.STROKE);
-			paint.setStrokeWidth(1);
-			paint.setColor(Color.BLUE);
 			Path path = new Path();
+			
 			//out
 			RectF outCircle = new RectF(0, 0, outRadius * 2, outRadius * 2);
 			path.arcTo(outCircle, 0, 359.9999f, false);
+			canvas.drawPath(path, paintGuides);
+
 			//in
+			path.reset();
 			float innerAdjust = outRadius - inRadius;
 			RectF inCircle = new RectF(innerAdjust, innerAdjust, outRadius * 2 - innerAdjust, outRadius * 2 - innerAdjust);
 			path.arcTo(inCircle, 0, 359.9999f, false);
-			//middle
+			canvas.drawPath(path, paintGuides);
+
+			////middle
+			path.reset();
 			float middleAdjust = outRadius - middleRadius;
 			RectF middleCircle = new RectF(middleAdjust, middleAdjust, outRadius * 2 - middleAdjust, outRadius * 2 - middleAdjust);
 			path.arcTo(middleCircle, 0, 359.9999f, false);
-			path.close();
-			canvas.drawPath(path, paint);
+			canvas.drawPath(path, paintGuides);
 		}
 		
 		private void drawBackground(Canvas canvas) {
 			Path path = new Path();
-			Paint paint = new Paint();
-			paint.setDither(true);
-			paint.setStyle(Paint.Style.FILL);
-			paint.setStrokeJoin(Paint.Join.ROUND);
-			paint.setStrokeCap(Paint.Cap.ROUND);
-			paint.setColor(Color.WHITE);
-			paint.setAntiAlias(true);
 			//out
 			RectF outCircle = new RectF(0, 0, outRadius * 2, outRadius * 2);
 			path.arcTo(outCircle, startAngleSlice, 210f, false);
@@ -205,18 +250,11 @@ public class MainActivity extends AppCompatActivity {
 			path.arcTo(outCircle, startAngleSlice, 210f, false);
 			path.arcTo(inCircle, startAngleSlice + 210, -210, false);
 			path.close();
-			canvas.drawPath(path, paint);
+			canvas.drawPath(path, paintBackground);
 		}
 		
 		private void drawSelected(Canvas canvas) {
 			Path path = new Path();
-			Paint paint = new Paint();
-			paint.setDither(true);
-			paint.setStyle(Paint.Style.FILL);
-			paint.setStrokeJoin(Paint.Join.ROUND);
-			paint.setStrokeCap(Paint.Cap.ROUND);
-			paint.setColor(Color.RED);
-			paint.setAntiAlias(true);
 			//out
 			RectF outCircle = new RectF(0, 0, outRadius * 2, outRadius * 2);
 			path.arcTo(outCircle, 255f, 30f, false);
@@ -228,21 +266,15 @@ public class MainActivity extends AppCompatActivity {
 			path.arcTo(outCircle, 255, 30f, false);
 			path.arcTo(inCircle, 255 + 30, -30, false);
 			path.close();
-			canvas.drawPath(path, paint);
+			canvas.drawPath(path, paintSelected);
 		}
 		
-		private void drawSpokes(Canvas canvas, View child) {
-			Paint paint = new Paint();
-			paint.setAntiAlias(true);
-			paint.setDither(true);
-			paint.setStyle(Paint.Style.STROKE);
-			paint.setStrokeWidth(1);
-			//Spokes
+		private void drawSpokes(Canvas canvas) {
 			for (int i = 0; i < 15; i++) {
 				if (i % 2 != 0) {
-					paint.setColor(Color.GREEN);
+					paintSpokes.setColor(Color.GREEN);
 				} else {
-					paint.setColor(Color.BLUE);
+					paintSpokes.setColor(Color.BLUE);
 				}
 				int currentAngle = startAngleSlice + (15 * i);
 				double radians = Math.toRadians(currentAngle);
@@ -250,7 +282,7 @@ public class MainActivity extends AppCompatActivity {
 				float y2 = outRadius + (float) Math.sin(radians) * outRadius;
 				float x1 = outRadius + (float) Math.cos(radians) * inRadius;
 				float y1 = outRadius + (float) Math.sin(radians) * inRadius;
-				canvas.drawLine(x1, y1, x2, y2, paint);
+				canvas.drawLine(x1, y1, x2, y2, paintSpokes);
 			}
 		}
 		
