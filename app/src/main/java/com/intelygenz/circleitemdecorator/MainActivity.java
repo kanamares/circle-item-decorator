@@ -14,6 +14,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.LinearSnapHelper;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SnapHelper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,6 +28,7 @@ public class MainActivity extends AppCompatActivity {
 	private static final int TOTAL_ITEMS = 100;
 	
 	private RecyclerView recyclerView;
+	private LinearLayoutManager linearLayoutManager;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -38,7 +40,8 @@ public class MainActivity extends AppCompatActivity {
 			list.add(i);
 		}
 		recyclerView = findViewById(R.id.recycler_view);
-		recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+		linearLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
+		recyclerView.setLayoutManager(linearLayoutManager);
 		recyclerView.setAdapter(new RecyclerViewAdapter(getApplicationContext(), list));
 		recyclerView.addItemDecoration(new CircleItemDecoration());
 		final SnapHelper helper = new LinearSnapHelper();
@@ -48,11 +51,11 @@ public class MainActivity extends AppCompatActivity {
 			.scrollToPosition(TOTAL_ITEMS / 2);
 	}
 	
-	private int getCenterY(RecyclerView parent) {
+	private float getCenterY(RecyclerView parent) {
 		return parent.getTop() + parent.getHeight() / 2;
 	}
 	
-	private int getCenterX(RecyclerView parent) {
+	private float getCenterX(RecyclerView parent) {
 		return parent.getLeft() + parent.getWidth() / 2;
 	}
 	
@@ -104,13 +107,14 @@ public class MainActivity extends AppCompatActivity {
 		
 		private boolean initialized = false;
 		
-		int startAngleSlice = 180 - 15;
+		private int startAngleSlice = 180 - 15;
 		
-		float outRadius = -1f;
-		float inRadius = -1f;
-		float middleRadius = -1f;
-		float centerX = -1f;
-		float centerY = -1f;
+		private float outRadius = -1f;
+		private float inRadius = -1f;
+		private float middleRadius = -1f;
+		private float centerX = -1f;
+		private float centerY = -1f;
+		private int totalItemsVisible = -1;
 		
 		private Paint paintSpokes;
 		private Paint paintSelected;
@@ -172,12 +176,13 @@ public class MainActivity extends AppCompatActivity {
 				inRadius = parent.getWidth() / 3;
 				middleRadius = outRadius - (outRadius - inRadius) / 2;
 				initialized = true;
+				totalItemsVisible = linearLayoutManager.findLastVisibleItemPosition() - linearLayoutManager.findFirstVisibleItemPosition() + 1;
 			}
+			int childCount = parent.getChildCount();
 			
-			final int childCount = parent.getChildCount();
-			//Log.d(TAG, "childCount: " + childCount + " centerX: " + centerX + " centerY: " + centerY);
+			List<Float> angles = new ArrayList<>();
+			
 			for (int i = 0; i < childCount; i++) {
-				//if(i > 7) continue;
 				final View child = parent.getChildAt(i);
 				float childCenter = child.getLeft() + child.getWidth() / 2;
 				float totalX;
@@ -189,7 +194,8 @@ public class MainActivity extends AppCompatActivity {
 					totalX = childCenter;
 					currentItemAngle = 180 + (90 * totalX / outRadius);
 				}
-				if(currentItemAngle < 180 || currentItemAngle > 360) {
+				angles.add(currentItemAngle);
+				if(currentItemAngle < 165 || currentItemAngle > 375) {
 					child.setVisibility(View.GONE);
 				} else {
 					child.setVisibility(View.VISIBLE);
@@ -200,6 +206,9 @@ public class MainActivity extends AppCompatActivity {
 				child.setY(y3);
 				child.setX(x3);
 			}
+			
+			Log.d(TAG, "totalItemsVisible: " + totalItemsVisible + " childCount: " + childCount + " angles: " + angles.toString());
+			
 			drawBackground(c);
 			drawSelected(c);
 			drawGuides(c);
