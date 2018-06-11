@@ -5,12 +5,9 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.RadialGradient;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.graphics.Shader;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -150,7 +147,7 @@ public class MainActivity extends AppCompatActivity {
 			}
 			drawBackground(c);
 			drawGuides(c);
-			drawSeparators(c);
+			drawSpokes(c, parent.getChildAt(3));
 		}
 
 		@Override
@@ -183,6 +180,7 @@ public class MainActivity extends AppCompatActivity {
 			float middleAdjust = outRadius - middleRadius;
 			RectF middleCircle = new RectF(middleAdjust, middleAdjust, outRadius * 2 - middleAdjust, outRadius * 2 - middleAdjust);
 			path.arcTo(middleCircle, 0, 359.99f, false);
+
 			path.close();
 			canvas.drawPath(path, paint);
 		}
@@ -214,14 +212,30 @@ public class MainActivity extends AppCompatActivity {
 			canvas.drawPath(path, paint);
 		}
 		
-		private void drawSeparators(Canvas canvas) {
+		private void drawSpokes(Canvas canvas, View child) {
 			Paint paint = new Paint();
 			paint.setAntiAlias(true);
 			paint.setDither(true);
 			paint.setStyle(Paint.Style.STROKE);
 			paint.setStrokeWidth(1);
-			paint.setColor(Color.GREEN);
-			canvas.drawLine(outRadius, outRadius - inRadius, outRadius, 0, paint);
+
+			//Spokes
+			int startAngle = 180 - 15;
+			for (int i = 0; i < 15; i++) {
+				if(i % 2 != 0) {
+					paint.setColor(Color.GREEN);
+				} else {
+					paint.setColor(Color.BLUE);
+				}
+				int currentAngle = startAngle + (15 * i);
+				double radians = Math.toRadians(currentAngle);
+				
+				float x2 = outRadius + (float) Math.cos(radians) * outRadius;
+				float y2 = outRadius + (float) Math.sin(radians) * outRadius;
+				float x1 = outRadius + (float) Math.cos(radians) * inRadius;
+				float y1 = outRadius + (float) Math.sin(radians) * inRadius;
+				canvas.drawLine(x1, y1, x2, y2, paint);
+			}
 		}
 		
 	}
