@@ -25,6 +25,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 	
 	private static final String TAG = "CIRCLE_ITEM_DECORATOR";
+	private static final int TOTAL_ITEMS = 100;
 	
 	private RecyclerView recyclerView;
 	
@@ -33,7 +34,8 @@ public class MainActivity extends AppCompatActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		List<Integer> list = new ArrayList<>();
-		for (int i = 0; i < 11; i++) {
+		int total = 11;
+		for (int i = 0; i < total; i++) {
 			list.add(i);
 		}
 		recyclerView = findViewById(R.id.recycler_view);
@@ -44,17 +46,15 @@ public class MainActivity extends AppCompatActivity {
 		helper.attachToRecyclerView(recyclerView);
 		recyclerView
 			.getLayoutManager()
-			.scrollToPosition(Integer.MAX_VALUE / 2);
+			.scrollToPosition(TOTAL_ITEMS / 2);
 	}
 	
 	private int getCenterY(RecyclerView parent) {
-		int y = parent.getTop() + parent.getHeight() / 2;
-		return y;
+		return parent.getTop() + parent.getHeight() / 2;
 	}
 	
 	private int getCenterX(RecyclerView parent) {
-		int x = parent.getLeft() + parent.getWidth() / 2;
-		return x;
+		return parent.getLeft() + parent.getWidth() / 2;
 	}
 	
 	private class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.MyViewHolder> {
@@ -71,8 +71,8 @@ public class MainActivity extends AppCompatActivity {
 		@Override
 		public MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
 			return new MyViewHolder(LayoutInflater
-				                        .from(context)
-				                        .inflate(R.layout.item, parent, false));
+										.from(context)
+										.inflate(R.layout.item, parent, false));
 		}
 		
 		@Override
@@ -82,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
 		
 		@Override
 		public int getItemCount() {
-			return Integer.MAX_VALUE;
+			return TOTAL_ITEMS;
 		}
 		
 		private int getItem(int position) {
@@ -104,12 +104,10 @@ public class MainActivity extends AppCompatActivity {
 	class CircleItemDecoration extends RecyclerView.ItemDecoration {
 		
 		int startAngleSlice = 180 - 15;
-		int startAngleItem = 180;
 		
 		float outRadius = -1f;
 		float inRadius = -1f;
 		float middleRadius = -1f;
-		float bottomRadius = -1f;
 		float centerX = -1f;
 		float centerY = -1f;
 		
@@ -123,45 +121,39 @@ public class MainActivity extends AppCompatActivity {
 			centerY = getCenterY(parent);
 			outRadius = parent.getWidth() / 2;
 			inRadius = parent.getWidth() / 3;
-			middleRadius = outRadius - (parent
-				                            .getChildAt(0)
-				                            .getHeight() / 2);
-			bottomRadius = outRadius - parent
-				.getChildAt(0)
-				.getHeight();
+			middleRadius = outRadius - (outRadius - inRadius) / 2;
 			final int childCount = parent.getChildCount();
+			Log.d(TAG, "childCount: " + childCount + " centerX: " + centerX + " centerY: " + centerY);
 			for (int i = 0; i < childCount; i++) {
-				Log.d(TAG, "childCount: " + childCount);
+				if(i > 7) continue;
 				final View child = parent.getChildAt(i);
-				
-				if(i > 6) {
-					child.setVisibility(View.GONE);
-					continue;
+				float childCenter = child.getLeft() + child.getWidth() / 2;
+				float totalX;
+				float currentItemAngle;
+				if(childCenter < centerX) {
+					totalX = centerX - childCenter;
+					currentItemAngle = 270 - (90 * totalX / outRadius);
+				} else {
+					totalX = childCenter;
+					currentItemAngle = 180 + (90 * totalX / outRadius);
 				}
-				
-				int currentAngle = startAngleItem + (30 * i);
-				double radians = Math.toRadians(currentAngle);
-				
-				float x2 = (outRadius-child.getWidth()/2) + (float) Math.cos(radians) * middleRadius;
-				float y2 = (outRadius-child.getHeight()/2) + (float) Math.sin(radians) * middleRadius;
-				
-				double childCenter = child.getLeft() + child.getWidth() / 2;
-				double x = childCenter - outRadius;
-				if (x > middleRadius) {
-					child.setVisibility(View.GONE);
-				} else if (x < -middleRadius) {
+				if(currentItemAngle < 180 || currentItemAngle > 360) {
 					child.setVisibility(View.GONE);
 				} else {
 					child.setVisibility(View.VISIBLE);
-					child.setY(y2);
-					child.setX(x2);
 				}
+				double radians3 = Math.toRadians(currentItemAngle);
+				float x3 = (outRadius - child.getWidth() / 2) + (float) Math.cos(radians3) * middleRadius;
+				float y3 = (outRadius - child.getHeight() / 2) + (float) Math.sin(radians3) * middleRadius;
+				child.setY(y3);
+				child.setX(x3);
 			}
 			drawBackground(c);
+			drawSelected(c);
 			drawGuides(c);
 			drawSpokes(c, parent.getChildAt(3));
 		}
-
+		
 		@Override
 		public void onDrawOver(Canvas canvas, RecyclerView parent, RecyclerView.State state) {
 		}
@@ -178,21 +170,17 @@ public class MainActivity extends AppCompatActivity {
 			paint.setStrokeWidth(1);
 			paint.setColor(Color.BLUE);
 			Path path = new Path();
-			
 			//out
 			RectF outCircle = new RectF(0, 0, outRadius * 2, outRadius * 2);
 			path.arcTo(outCircle, 0, 359.9999f, false);
-			
 			//in
 			float innerAdjust = outRadius - inRadius;
 			RectF inCircle = new RectF(innerAdjust, innerAdjust, outRadius * 2 - innerAdjust, outRadius * 2 - innerAdjust);
 			path.arcTo(inCircle, 0, 359.9999f, false);
-			
 			//middle
 			float middleAdjust = outRadius - middleRadius;
 			RectF middleCircle = new RectF(middleAdjust, middleAdjust, outRadius * 2 - middleAdjust, outRadius * 2 - middleAdjust);
 			path.arcTo(middleCircle, 0, 359.9999f, false);
-
 			path.close();
 			canvas.drawPath(path, paint);
 		}
@@ -206,21 +194,40 @@ public class MainActivity extends AppCompatActivity {
 			paint.setStrokeCap(Paint.Cap.ROUND);
 			paint.setColor(Color.WHITE);
 			paint.setAntiAlias(true);
-			
 			//out
 			RectF outCircle = new RectF(0, 0, outRadius * 2, outRadius * 2);
 			path.arcTo(outCircle, startAngleSlice, 210f, false);
-			
 			//in
 			float innerAdjust = outRadius - inRadius;
 			RectF inCircle = new RectF(innerAdjust, innerAdjust, outRadius * 2 - innerAdjust, outRadius * 2 - innerAdjust);
 			path.arcTo(inCircle, startAngleSlice, 210f, false);
-			
 			path.reset();
 			path.arcTo(outCircle, startAngleSlice, 210f, false);
 			path.arcTo(inCircle, startAngleSlice + 210, -210, false);
 			path.close();
-			
+			canvas.drawPath(path, paint);
+		}
+		
+		private void drawSelected(Canvas canvas) {
+			Path path = new Path();
+			Paint paint = new Paint();
+			paint.setDither(true);
+			paint.setStyle(Paint.Style.FILL);
+			paint.setStrokeJoin(Paint.Join.ROUND);
+			paint.setStrokeCap(Paint.Cap.ROUND);
+			paint.setColor(Color.RED);
+			paint.setAntiAlias(true);
+			//out
+			RectF outCircle = new RectF(0, 0, outRadius * 2, outRadius * 2);
+			path.arcTo(outCircle, 255f, 30f, false);
+			//in
+			float innerAdjust = outRadius * 0.02f;
+			RectF inCircle = new RectF(innerAdjust, innerAdjust, outRadius * 2 - innerAdjust, outRadius * 2 - innerAdjust);
+			path.arcTo(inCircle, 255, 30f, false);
+			path.reset();
+			path.arcTo(outCircle, 255, 30f, false);
+			path.arcTo(inCircle, 255 + 30, -30, false);
+			path.close();
 			canvas.drawPath(path, paint);
 		}
 		
@@ -230,18 +237,15 @@ public class MainActivity extends AppCompatActivity {
 			paint.setDither(true);
 			paint.setStyle(Paint.Style.STROKE);
 			paint.setStrokeWidth(1);
-
 			//Spokes
-			
 			for (int i = 0; i < 15; i++) {
-				if(i % 2 != 0) {
+				if (i % 2 != 0) {
 					paint.setColor(Color.GREEN);
 				} else {
 					paint.setColor(Color.BLUE);
 				}
 				int currentAngle = startAngleSlice + (15 * i);
 				double radians = Math.toRadians(currentAngle);
-				
 				float x2 = outRadius + (float) Math.cos(radians) * outRadius;
 				float y2 = outRadius + (float) Math.sin(radians) * outRadius;
 				float x1 = outRadius + (float) Math.cos(radians) * inRadius;
