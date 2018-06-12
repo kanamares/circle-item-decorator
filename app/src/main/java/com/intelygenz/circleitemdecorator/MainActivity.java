@@ -18,7 +18,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -79,7 +78,6 @@ public class MainActivity extends AppCompatActivity {
 		
 		@Override
 		public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
-			holder.textView.setText("P:" + position + "\nL:" + getItem(position));
 		}
 		
 		@Override
@@ -87,17 +85,10 @@ public class MainActivity extends AppCompatActivity {
 			return TOTAL_ITEMS;
 		}
 		
-		private int getItem(int position) {
-			return position % list.size();
-		}
-		
 		class MyViewHolder extends RecyclerView.ViewHolder {
-			
-			private TextView textView;
 			
 			MyViewHolder(View itemView) {
 				super(itemView);
-				textView = itemView.findViewById(R.id.text);
 			}
 		}
 		
@@ -107,7 +98,9 @@ public class MainActivity extends AppCompatActivity {
 		
 		private boolean initialized = false;
 		
-		private int startAngleSlice = 180 - 15;
+		private float startAngleSlice = -1;
+		private float endAngleSlide = -1;
+		private float eachAngleSlide = -1;
 		
 		private float outRadius = -1f;
 		private float inRadius = -1f;
@@ -119,46 +112,36 @@ public class MainActivity extends AppCompatActivity {
 		private Paint paintSpokes;
 		private Paint paintSelected;
 		private Paint paintBackground;
-		private Paint paintGuides;
 		
 		CircleItemDecoration() {
 			initPaintSpokes();
 			initPaintSelected();
 			initPaintBackground();
-			initPaintGuides();
-		}
-		
-		private void initPaintGuides() {
-			paintGuides = new Paint();
-			paintGuides.setAntiAlias(true);
-			paintGuides.setDither(true);
-			paintGuides.setStyle(Paint.Style.STROKE);
-			paintGuides.setStrokeWidth(1);
-			paintGuides.setColor(Color.BLUE);
 		}
 		
 		private void initPaintBackground() {
 			paintBackground = new Paint();
+			paintBackground.setColor(Color.WHITE);
+			paintBackground.setAntiAlias(true);
 			paintBackground.setDither(true);
 			paintBackground.setStyle(Paint.Style.FILL);
 			paintBackground.setStrokeJoin(Paint.Join.ROUND);
 			paintBackground.setStrokeCap(Paint.Cap.ROUND);
-			paintBackground.setColor(Color.WHITE);
-			paintBackground.setAntiAlias(true);
 		}
 		
 		private void initPaintSelected() {
 			paintSelected = new Paint();
+			paintSelected.setColor(Color.RED);
+			paintSelected.setAntiAlias(true);
 			paintSelected.setDither(true);
 			paintSelected.setStyle(Paint.Style.FILL);
 			paintSelected.setStrokeJoin(Paint.Join.ROUND);
 			paintSelected.setStrokeCap(Paint.Cap.ROUND);
-			paintSelected.setColor(Color.RED);
-			paintSelected.setAntiAlias(true);
 		}
 		
 		private void initPaintSpokes() {
 			paintSpokes = new Paint();
+			paintSpokes.setColor(Color.GRAY);
 			paintSpokes.setAntiAlias(true);
 			paintSpokes.setDither(true);
 			paintSpokes.setStyle(Paint.Style.STROKE);
@@ -195,7 +178,7 @@ public class MainActivity extends AppCompatActivity {
 					currentItemAngle = 180 + (90 * totalX / outRadius);
 				}
 				angles.add(currentItemAngle);
-				if(currentItemAngle < 165 || currentItemAngle > 375) {
+				if(currentItemAngle < startAngleSlice || currentItemAngle > endAngleSlide) {
 					child.setVisibility(View.GONE);
 				} else {
 					child.setVisibility(View.VISIBLE);
@@ -209,9 +192,11 @@ public class MainActivity extends AppCompatActivity {
 			
 			Log.d(TAG, "totalItemsVisible: " + totalItemsVisible + " childCount: " + childCount + " angles: " + angles.toString());
 			
+			eachAngleSlide = Math.abs(angles.get(0) - angles.get(1));
+			startAngleSlice = angles.get(0) - eachAngleSlide / 2;
+			endAngleSlide = angles.get(angles.size() - 1) + eachAngleSlide / 2;
 			drawBackground(c);
 			drawSelected(c);
-			drawGuides(c);
 			drawSpokes(c);
 		}
 		
@@ -223,75 +208,49 @@ public class MainActivity extends AppCompatActivity {
 		public void getItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {
 		}
 		
-		private void drawGuides(Canvas canvas) {
-			Path path = new Path();
-			
-			//out
-			RectF outCircle = new RectF(0, 0, outRadius * 2, outRadius * 2);
-			path.arcTo(outCircle, 0, 359.9999f, false);
-			canvas.drawPath(path, paintGuides);
-
-			//in
-			path.reset();
-			float innerAdjust = outRadius - inRadius;
-			RectF inCircle = new RectF(innerAdjust, innerAdjust, outRadius * 2 - innerAdjust, outRadius * 2 - innerAdjust);
-			path.arcTo(inCircle, 0, 359.9999f, false);
-			canvas.drawPath(path, paintGuides);
-
-			////middle
-			path.reset();
-			float middleAdjust = outRadius - middleRadius;
-			RectF middleCircle = new RectF(middleAdjust, middleAdjust, outRadius * 2 - middleAdjust, outRadius * 2 - middleAdjust);
-			path.arcTo(middleCircle, 0, 359.9999f, false);
-			canvas.drawPath(path, paintGuides);
-		}
-		
 		private void drawBackground(Canvas canvas) {
 			Path path = new Path();
 			//out
 			RectF outCircle = new RectF(0, 0, outRadius * 2, outRadius * 2);
-			path.arcTo(outCircle, startAngleSlice, 210f, false);
+			path.arcTo(outCircle, startAngleSlice, endAngleSlide - startAngleSlice, false);
 			//in
 			float innerAdjust = outRadius - inRadius;
 			RectF inCircle = new RectF(innerAdjust, innerAdjust, outRadius * 2 - innerAdjust, outRadius * 2 - innerAdjust);
-			path.arcTo(inCircle, startAngleSlice, 210f, false);
+			path.arcTo(inCircle, startAngleSlice, endAngleSlide - startAngleSlice, false);
 			path.reset();
-			path.arcTo(outCircle, startAngleSlice, 210f, false);
-			path.arcTo(inCircle, startAngleSlice + 210, -210, false);
+			path.arcTo(outCircle, startAngleSlice, endAngleSlide - startAngleSlice, false);
+			path.arcTo(inCircle, startAngleSlice + (endAngleSlide - startAngleSlice), -(endAngleSlide - startAngleSlice), false);
 			path.close();
 			canvas.drawPath(path, paintBackground);
 		}
 		
 		private void drawSelected(Canvas canvas) {
 			Path path = new Path();
+			float start = 270f - eachAngleSlide/2;
 			//out
 			RectF outCircle = new RectF(0, 0, outRadius * 2, outRadius * 2);
-			path.arcTo(outCircle, 255f, 30f, false);
+			path.arcTo(outCircle, start, eachAngleSlide, false);
 			//in
 			float innerAdjust = outRadius * 0.02f;
 			RectF inCircle = new RectF(innerAdjust, innerAdjust, outRadius * 2 - innerAdjust, outRadius * 2 - innerAdjust);
-			path.arcTo(inCircle, 255, 30f, false);
+			path.arcTo(inCircle, start, eachAngleSlide, false);
 			path.reset();
-			path.arcTo(outCircle, 255, 30f, false);
-			path.arcTo(inCircle, 255 + 30, -30, false);
+			path.arcTo(outCircle, start, eachAngleSlide, false);
+			path.arcTo(inCircle, start + eachAngleSlide, -eachAngleSlide, false);
 			path.close();
 			canvas.drawPath(path, paintSelected);
 		}
 		
 		private void drawSpokes(Canvas canvas) {
-			for (int i = 0; i < 15; i++) {
-				if (i % 2 != 0) {
-					paintSpokes.setColor(Color.GREEN);
-				} else {
-					paintSpokes.setColor(Color.BLUE);
-				}
-				int currentAngle = startAngleSlice + (15 * i);
+			float currentAngle = startAngleSlice;
+			while (currentAngle <= endAngleSlide) {
 				double radians = Math.toRadians(currentAngle);
 				float x2 = outRadius + (float) Math.cos(radians) * outRadius;
 				float y2 = outRadius + (float) Math.sin(radians) * outRadius;
 				float x1 = outRadius + (float) Math.cos(radians) * inRadius;
 				float y1 = outRadius + (float) Math.sin(radians) * inRadius;
 				canvas.drawLine(x1, y1, x2, y2, paintSpokes);
+				currentAngle += eachAngleSlide;
 			}
 		}
 		
