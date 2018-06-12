@@ -21,6 +21,8 @@ import android.view.ViewGroup;
 import java.util.ArrayList;
 import java.util.List;
 
+import static android.support.v7.widget.RecyclerView.SCROLL_STATE_IDLE;
+
 public class MainActivity extends AppCompatActivity {
 	
 	private static final String TAG = "CIRCLE_ITEM_DECORATOR";
@@ -151,8 +153,7 @@ public class MainActivity extends AppCompatActivity {
 		@Override
 		public void onDraw(Canvas c, RecyclerView parent, RecyclerView.State state) {
 			super.onDraw(c, parent, state);
-			
-			if(!initialized) {
+			if (!initialized) {
 				centerX = getCenterX(parent);
 				centerY = getCenterY(parent);
 				outRadius = parent.getWidth() / 2;
@@ -162,15 +163,13 @@ public class MainActivity extends AppCompatActivity {
 				totalItemsVisible = linearLayoutManager.findLastVisibleItemPosition() - linearLayoutManager.findFirstVisibleItemPosition() + 1;
 			}
 			int childCount = parent.getChildCount();
-			
 			List<Float> angles = new ArrayList<>();
-			
 			for (int i = 0; i < childCount; i++) {
 				final View child = parent.getChildAt(i);
 				float childCenter = child.getLeft() + child.getWidth() / 2;
 				float totalX;
 				float currentItemAngle;
-				if(childCenter < centerX) {
+				if (childCenter < centerX) {
 					totalX = centerX - childCenter;
 					currentItemAngle = 270 - (90 * totalX / outRadius);
 				} else {
@@ -178,7 +177,7 @@ public class MainActivity extends AppCompatActivity {
 					currentItemAngle = 180 + (90 * totalX / outRadius);
 				}
 				angles.add(currentItemAngle);
-				if(currentItemAngle < startAngleSlice || currentItemAngle > endAngleSlide) {
+				if (currentItemAngle < startAngleSlice || currentItemAngle > endAngleSlide) {
 					child.setVisibility(View.GONE);
 				} else {
 					child.setVisibility(View.VISIBLE);
@@ -189,15 +188,14 @@ public class MainActivity extends AppCompatActivity {
 				child.setY(y3);
 				child.setX(x3);
 			}
-			
-			Log.d(TAG, "totalItemsVisible: " + totalItemsVisible + " childCount: " + childCount + " angles: " + angles.toString());
-			
+			Log.d(TAG, "parent.isAnimating(): " + parent.isAnimating() + " state: " + parent.getScrollState());
 			eachAngleSlide = Math.abs(angles.get(0) - angles.get(1));
 			startAngleSlice = angles.get(0) - eachAngleSlide / 2;
 			endAngleSlide = angles.get(angles.size() - 1) + eachAngleSlide / 2;
-			drawBackground(c);
-			drawSelected(c);
-			drawSpokes(c);
+			drawSlices(c);
+			if (parent.getScrollState() == SCROLL_STATE_IDLE) {
+				drawSelected(c);
+			}
 		}
 		
 		@Override
@@ -208,25 +206,9 @@ public class MainActivity extends AppCompatActivity {
 		public void getItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {
 		}
 		
-		private void drawBackground(Canvas canvas) {
-			Path path = new Path();
-			//out
-			RectF outCircle = new RectF(0, 0, outRadius * 2, outRadius * 2);
-			path.arcTo(outCircle, startAngleSlice, endAngleSlide - startAngleSlice, false);
-			//in
-			float innerAdjust = outRadius - inRadius;
-			RectF inCircle = new RectF(innerAdjust, innerAdjust, outRadius * 2 - innerAdjust, outRadius * 2 - innerAdjust);
-			path.arcTo(inCircle, startAngleSlice, endAngleSlide - startAngleSlice, false);
-			path.reset();
-			path.arcTo(outCircle, startAngleSlice, endAngleSlide - startAngleSlice, false);
-			path.arcTo(inCircle, startAngleSlice + (endAngleSlide - startAngleSlice), -(endAngleSlide - startAngleSlice), false);
-			path.close();
-			canvas.drawPath(path, paintBackground);
-		}
-		
 		private void drawSelected(Canvas canvas) {
 			Path path = new Path();
-			float start = 270f - eachAngleSlide/2;
+			float start = 270f - eachAngleSlide / 2;
 			//out
 			RectF outCircle = new RectF(0, 0, outRadius * 2, outRadius * 2);
 			path.arcTo(outCircle, start, eachAngleSlide, false);
@@ -241,7 +223,7 @@ public class MainActivity extends AppCompatActivity {
 			canvas.drawPath(path, paintSelected);
 		}
 		
-		private void drawSpokes(Canvas canvas) {
+		private void drawSlices(Canvas canvas) {
 			float currentAngle = startAngleSlice;
 			while (currentAngle <= endAngleSlide) {
 				double radians = Math.toRadians(currentAngle);
@@ -250,6 +232,21 @@ public class MainActivity extends AppCompatActivity {
 				float x1 = outRadius + (float) Math.cos(radians) * inRadius;
 				float y1 = outRadius + (float) Math.sin(radians) * inRadius;
 				canvas.drawLine(x1, y1, x2, y2, paintSpokes);
+				
+				Path path = new Path();
+				//out
+				RectF outCircle = new RectF(0, 0, outRadius * 2, outRadius * 2);
+				path.arcTo(outCircle, currentAngle, eachAngleSlide, false);
+				//in
+				float innerAdjust = outRadius - inRadius;
+				RectF inCircle = new RectF(innerAdjust, innerAdjust, outRadius * 2 - innerAdjust, outRadius * 2 - innerAdjust);
+				path.arcTo(inCircle, currentAngle, eachAngleSlide, false);
+				path.reset();
+				path.arcTo(outCircle, currentAngle, eachAngleSlide, false);
+				path.arcTo(inCircle, currentAngle + eachAngleSlide, -eachAngleSlide, false);
+				path.close();
+				canvas.drawPath(path, paintBackground);
+				
 				currentAngle += eachAngleSlide;
 			}
 		}
