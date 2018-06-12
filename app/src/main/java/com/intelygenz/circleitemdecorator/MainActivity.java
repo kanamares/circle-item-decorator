@@ -1,6 +1,5 @@
 package com.intelygenz.circleitemdecorator;
 
-import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -13,7 +12,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.LinearSnapHelper;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.SnapHelper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,49 +28,58 @@ public class MainActivity extends AppCompatActivity {
 	
 	private RecyclerView recyclerView;
 	private LinearLayoutManager linearLayoutManager;
+	private boolean initialized = false;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		List<Integer> list = new ArrayList<>();
-		int total = 7;
+		final int total = 11;
 		for (int i = 0; i < total; i++) {
 			list.add(i);
 		}
 		recyclerView = findViewById(R.id.recycler_view);
 		linearLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
 		recyclerView.setLayoutManager(linearLayoutManager);
-		recyclerView.setAdapter(new RecyclerViewAdapter(getApplicationContext(), list));
+		RecyclerViewAdapter adapter = new RecyclerViewAdapter(list, new RecyclerViewAdapter.OnItemClickListener() {
+			@Override
+			public void onItemClick(int center) {
+				recyclerView.smoothScrollBy(center - recyclerView.getWidth() / 2, 0);
+			}
+		});
+		recyclerView.setAdapter(adapter);
 		recyclerView.addItemDecoration(new CircleItemDecoration());
-		final SnapHelper helper = new LinearSnapHelper();
+		final LinearSnapHelper helper = new LinearSnapHelper();
 		helper.attachToRecyclerView(recyclerView);
+		int middle = TOTAL_ITEMS / 2;
+		final int center = (middle / total) * total;
 		recyclerView
 			.getLayoutManager()
-			.scrollToPosition(TOTAL_ITEMS / 2);
+			.scrollToPosition(center);
 	}
 	
-	private class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.MyViewHolder> {
+	static class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.MyViewHolder> {
 		
-		private Context context;
 		private List<Integer> list;
+		private final OnItemClickListener listener;
 		
-		RecyclerViewAdapter(Context context, List<Integer> list) {
-			this.context = context;
+		RecyclerViewAdapter(List<Integer> list, OnItemClickListener listener) {
 			this.list = list;
+			this.listener = listener;
 		}
 		
 		@NonNull
 		@Override
 		public MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
 			return new MyViewHolder(LayoutInflater
-										.from(context)
+										.from(parent.getContext())
 										.inflate(R.layout.item, parent, false));
 		}
 		
 		@Override
 		public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
-			holder.textView.setText(String.valueOf(getItem(position) + 1));
+			holder.bind(position, getItem(position), listener);
 		}
 		
 		private int getItem(int position) {
@@ -93,6 +100,19 @@ public class MainActivity extends AppCompatActivity {
 				textView = itemView.findViewById(R.id.text);
 			}
 			
+			void bind(final int position, final int item, final OnItemClickListener listener) {
+				textView.setText("P: " + position + "\nI: " + String.valueOf(item + 1));
+				itemView.setOnClickListener(new View.OnClickListener() {
+					@Override public void onClick(View v) {
+						listener.onItemClick(v.getLeft() + v.getWidth() / 2);
+					}
+				});
+			}
+			
+		}
+		
+		interface OnItemClickListener {
+			void onItemClick(int center);
 		}
 		
 	}

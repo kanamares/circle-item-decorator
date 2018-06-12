@@ -14,6 +14,6 @@
 		android:layout_height="0dp"
 		android:overScrollMode="never"
 		app:layout_constraintBottom_toBottomOf="parent"
-		app:layout_constraintDimensionRatio="4" />
+		app:layout_constraintDimensionRatio="2" />
 
 </android.support.constraint.ConstraintLayout>
