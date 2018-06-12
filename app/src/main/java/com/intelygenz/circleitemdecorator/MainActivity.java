@@ -17,6 +17,7 @@ import android.support.v7.widget.SnapHelper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -63,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
 		
 		@NonNull
 		@Override
-		public MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+		public MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
 			return new MyViewHolder(LayoutInflater
 										.from(context)
 										.inflate(R.layout.item, parent, false));
@@ -71,6 +72,11 @@ public class MainActivity extends AppCompatActivity {
 		
 		@Override
 		public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
+			holder.textView.setText(String.valueOf(getItem(position) + 1));
+		}
+		
+		private int getItem(int position) {
+			return position % list.size();
 		}
 		
 		@Override
@@ -80,9 +86,13 @@ public class MainActivity extends AppCompatActivity {
 		
 		class MyViewHolder extends RecyclerView.ViewHolder {
 			
+			private TextView textView;
+			
 			MyViewHolder(View itemView) {
 				super(itemView);
+				textView = itemView.findViewById(R.id.text);
 			}
+			
 		}
 		
 	}
