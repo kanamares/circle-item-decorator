@@ -14,7 +14,6 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.LinearSnapHelper;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SnapHelper;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,7 +25,7 @@ import static android.support.v7.widget.RecyclerView.SCROLL_STATE_IDLE;
 public class MainActivity extends AppCompatActivity {
 	
 	private static final String TAG = "CIRCLE_ITEM_DECORATOR";
-	private static final int TOTAL_ITEMS = 100;
+	private static final int TOTAL_ITEMS = Integer.MAX_VALUE;
 	
 	private RecyclerView recyclerView;
 	private LinearLayoutManager linearLayoutManager;
@@ -36,7 +35,7 @@ public class MainActivity extends AppCompatActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		List<Integer> list = new ArrayList<>();
-		int total = 11;
+		int total = 7;
 		for (int i = 0; i < total; i++) {
 			list.add(i);
 		}
@@ -50,14 +49,6 @@ public class MainActivity extends AppCompatActivity {
 		recyclerView
 			.getLayoutManager()
 			.scrollToPosition(TOTAL_ITEMS / 2);
-	}
-	
-	private float getCenterY(RecyclerView parent) {
-		return parent.getTop() + parent.getHeight() / 2;
-	}
-	
-	private float getCenterX(RecyclerView parent) {
-		return parent.getLeft() + parent.getWidth() / 2;
 	}
 	
 	private class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.MyViewHolder> {
@@ -121,35 +112,6 @@ public class MainActivity extends AppCompatActivity {
 			initPaintBackground();
 		}
 		
-		private void initPaintBackground() {
-			paintBackground = new Paint();
-			paintBackground.setColor(Color.WHITE);
-			paintBackground.setAntiAlias(true);
-			paintBackground.setDither(true);
-			paintBackground.setStyle(Paint.Style.FILL);
-			paintBackground.setStrokeJoin(Paint.Join.ROUND);
-			paintBackground.setStrokeCap(Paint.Cap.ROUND);
-		}
-		
-		private void initPaintSelected() {
-			paintSelected = new Paint();
-			paintSelected.setColor(Color.RED);
-			paintSelected.setAntiAlias(true);
-			paintSelected.setDither(true);
-			paintSelected.setStyle(Paint.Style.FILL);
-			paintSelected.setStrokeJoin(Paint.Join.ROUND);
-			paintSelected.setStrokeCap(Paint.Cap.ROUND);
-		}
-		
-		private void initPaintSpokes() {
-			paintSpokes = new Paint();
-			paintSpokes.setColor(Color.GRAY);
-			paintSpokes.setAntiAlias(true);
-			paintSpokes.setDither(true);
-			paintSpokes.setStyle(Paint.Style.STROKE);
-			paintSpokes.setStrokeWidth(1);
-		}
-		
 		@Override
 		public void onDraw(Canvas c, RecyclerView parent, RecyclerView.State state) {
 			super.onDraw(c, parent, state);
@@ -188,7 +150,6 @@ public class MainActivity extends AppCompatActivity {
 				child.setY(y3);
 				child.setX(x3);
 			}
-			Log.d(TAG, "parent.isAnimating(): " + parent.isAnimating() + " state: " + parent.getScrollState());
 			eachAngleSlide = Math.abs(angles.get(0) - angles.get(1));
 			startAngleSlice = angles.get(0) - eachAngleSlide / 2;
 			endAngleSlide = angles.get(angles.size() - 1) + eachAngleSlide / 2;
@@ -204,6 +165,43 @@ public class MainActivity extends AppCompatActivity {
 		
 		@Override
 		public void getItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {
+		}
+		
+		private void initPaintBackground() {
+			paintBackground = new Paint();
+			paintBackground.setColor(Color.WHITE);
+			paintBackground.setAntiAlias(true);
+			paintBackground.setDither(true);
+			paintBackground.setStyle(Paint.Style.FILL);
+			paintBackground.setStrokeJoin(Paint.Join.ROUND);
+			paintBackground.setStrokeCap(Paint.Cap.ROUND);
+		}
+		
+		private void initPaintSelected() {
+			paintSelected = new Paint();
+			paintSelected.setColor(Color.RED);
+			paintSelected.setAntiAlias(true);
+			paintSelected.setDither(true);
+			paintSelected.setStyle(Paint.Style.FILL);
+			paintSelected.setStrokeJoin(Paint.Join.ROUND);
+			paintSelected.setStrokeCap(Paint.Cap.ROUND);
+		}
+		
+		private void initPaintSpokes() {
+			paintSpokes = new Paint();
+			paintSpokes.setColor(Color.GRAY);
+			paintSpokes.setAntiAlias(true);
+			paintSpokes.setDither(true);
+			paintSpokes.setStyle(Paint.Style.STROKE);
+			paintSpokes.setStrokeWidth(1);
+		}
+		
+		private float getCenterY(RecyclerView parent) {
+			return parent.getTop() + parent.getHeight() / 2;
+		}
+		
+		private float getCenterX(RecyclerView parent) {
+			return parent.getLeft() + parent.getWidth() / 2;
 		}
 		
 		private void drawSelected(Canvas canvas) {
